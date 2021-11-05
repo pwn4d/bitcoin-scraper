@@ -6,4 +6,4 @@ pip install -r requirments.txt
 
 and to run
 
-pythonscrape
+bitcoinscrape
