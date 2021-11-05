@@ -1,9 +1,8 @@
 #!/usr/bin/env python3.9
-from selenium import webdriver
-import requests
 from bs4 import BeautifulSoup
 import requests
 import re
+from lxml import etree
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--address' , '-a',help="Select a Wallet Address" , action="store_true")
@@ -13,44 +12,30 @@ args = parser.parse_args()
 
 
 if args.address:
-    page = requests.get("https://www.blockchain.com/btc/address/" + args.WalletAddress)
+    try:
+        page_to_load = ("https://www.blockchain.com/btc/address/" + args.WalletAddress)
+        page = requests.get("https://www.blockchain.com/btc/address/" + args.WalletAddress)
+    except TypeError:
+        print('\n Invalid Wallet Adress \n')
+        exit()
 else:
     print('Invalid Options for help pleace use -h')
     exit()
 soup = BeautifulSoup(page.content, 'html.parser')
 
-first_h1 = soup.select('html')[0].text
-url = 'https://www.blockchain.com/btc/address/1GVY5eZvtc5bA6EFEGnpqJeHUC5YaV5dsb'
-res = requests.get(url)
-html_page = res.content
-soup = BeautifulSoup(html_page, 'html.parser')
-text = soup.find_all(text=True)
+selector = etree.HTML(str(soup))
+print('Transactions = ' + selector.xpath('/html/body/div[1]/div[3]/div/div[2]/div/div[1]/div[2]/div/div[3]/div[2]/span')[0].text)
+
+print('Total Recieved = ' + selector.xpath('/html/body/div[1]/div[3]/div/div[2]/div/div[1]/div[2]/div/div[4]/div[2]/span')[0].text)
+
+print('Total Sent = ' + selector.xpath('/html/body/div[1]/div[3]/div/div[2]/div/div[1]/div[2]/div/div[5]/div[1]/div/span')[0].text)
+
+print('Final Balance = ' + selector.xpath('/html/body/div[1]/div[3]/div/div[2]/div/div[1]/div[2]/div/div[6]/div[2]/span')[0].text)
+
+print('Hash Type = ' + selector.xpath('/html/body/div[1]/div[3]/div/div[2]/div/div[1]/div[2]/div/div[2]/div[2]/span')[0].text)
+
+print(f'All Scraped From {page_to_load}')
 
 
-#print(first_h1)
-
-first_h1 = first_h1.replace(',', '')
 
 
-print()
-print('Transactions = ' + ','.join( re.findall(r'Transactions(\d+)', first_h1)))
-
-received = ('Received = ' + ','.join( re.findall(r'It h received a total of (\d+)', first_h1)))
-received2 = (( re.findall(r'.(\d+) BTC' , first_h1)))
-
-sent = ('Sent = ' + ','.join( re.findall(r'and has sent a total of (\d+)', first_h1)))
-
-balance = ('Balance = ' + ','.join( re.findall(r'The current value of this address is (\d+)', first_h1)))
-
-
-print(received + '.' + received2[0] + ' BTC')
-print(sent + '.' + received2[4] + ' BTC')
-print(balance + '.' + received2[2])
-print()
-
-#address = input('Enter the wallet address     |')
-
-#driver = webdriver.Firefox(executable_path=r'/usr/local/bin/geckodriver')
-
-
-#driver.get('https://www.blockchain.com/search?search=' + address)
